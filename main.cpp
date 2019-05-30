@@ -70,7 +70,7 @@ struct PFontFile
 		return (SizeType)curpos.QuadPart;
 	}
 
-	template <typename typename T>
+	template <typename T>
 	SizeType align(T t) {
 		SizeType pos = getPos();
 		write(&t, sizeof(T) - (pos % sizeof(T)));
