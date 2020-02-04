@@ -93,12 +93,32 @@ const PFontFile::SizeType PFontFile::headerLength = 24;
 
 struct PFontSaver : public PFontFile
 {
+	unsigned char** fontCache;
+	unsigned int* posIndex;
 	PFontSaver(tjs_char const *storage) : PFontFile(storage, TJS_BS_WRITE)
 	{
+		fontCache = new unsigned char*[0xffff];
+		memset(fontCache, 0, sizeof(unsigned char*) * 0xffff);
+		posIndex = new unsigned int[0xffff];
+		memset(posIndex, 0, sizeof(unsigned int) * 0xffff);
 		write(headerText, headerLength);
 		write("            ", 12); // dummy index
 	}
-	virtual ~PFontSaver() {}
+	virtual ~PFontSaver() {
+		for (int i = 0; i < 0xffff; i += 1)
+		{
+			if (fontCache[i])
+			{
+				delete fontCache[i];
+			}
+			else
+			{
+				break;
+			}
+		}
+		delete fontCache;
+		delete posIndex;
+	}
 
 	void writeHeader(tjs_uint32 count, SizeType chindexpos, SizeType indexpos) {
 		seek(headerLength);
@@ -249,18 +269,43 @@ public:
 		width    = (tjs_uint16) w;
 		height   = (tjs_uint16) h;
 
-		offset   = saver.getPos();
+		offset   = 0;
 
 		if (width > 0 && height > 0) {
 			unsigned char *buf = new unsigned char[w * h];
 			try {
 				copyAlphaImage65(info, buf, w, h);
-				saver.writeCompress65(buf, w * h);
+				for (int i = 0; i < 0xffff; i += 1)
+				{
+					if (saver.fontCache[i] && !memcmp(buf, saver.fontCache[i], w * h))
+					{
+						delete buf;
+						buf = saver.fontCache[i];
+						offset = saver.posIndex[i];
+					}
+					else
+					{
+						break;
+					}
+				}
+				if (offset == 0)
+				{
+					offset = saver.getPos();
+					for (int i = 0; i < 0xffff; i += 1)
+					{
+						if (!saver.fontCache[i])
+						{
+							saver.fontCache[i] = buf;
+							saver.posIndex[i] = offset;
+							break;
+						}
+					}
+					saver.writeCompress65(buf, w * h);
+				}
 			} catch (...) {
 				delete [] buf;
 				throw;
 			}
-			delete buf;
 		}
 	}
 	void copyAlphaImage65(ncbPropAccessor &lay, unsigned char *buf, int w, int h) {
