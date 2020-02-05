@@ -476,12 +476,25 @@ struct LayerGlyphEx
 {
 	LayerGlyphEx(iTJSDispatch2 *self) : hdc(0), hfont(0), obj(self), font(0), format(GGO_GRAY8_BITMAP) {
 		hdc = ::CreateCompatibleDC(NULL);
+		gbuf = NULL;
 	}
 	~LayerGlyphEx() {
 		if (hfont) ::DeleteObject(hfont);
+		if (gbuf) delete[] gbuf;
 		::DeleteDC(hdc);
 	}
 
+	bool isGlyphSupported(int ncode) {
+		tjs_char code = ncode;
+		bool glyphSupported = false;
+
+		updateFont();
+		for (DWORD i = 0; i < gset->cRanges && !glyphSupported; i += 1)
+		{
+			glyphSupported = (code >= gset->ranges[i].wcLow && code < (gset->ranges[i].wcLow + gset->ranges[i].cGlyphs));
+		}
+		return glyphSupported;
+	}
 	int getGlyphOutlineInfo(int ncode, GLYPHMETRICS &gm, iTJSDispatch2 *info = 0) {
 		ZeroMemory(&gm, sizeof(gm));
 		int size;
@@ -491,6 +504,10 @@ struct LayerGlyphEx
 		updateFont();
 		size = ::GetGlyphOutlineW(hdc, ncode, format, &gm, 0, NULL, &no_transform_affin_matrix);
 		::GetTextExtentPoint32W(hdc, &code, 1, &incsz);
+		if (!isGlyphSupported(ncode))
+		{
+			size = 0;
+		}
 		if (info) {
 			ncbPropAccessor p(info);
 			p.SetValue(TJS_W("blackbox_x"), (tjs_int)(size?gm.gmBlackBoxX:0));
@@ -590,6 +607,13 @@ struct LayerGlyphEx
 		if (hfont) ::DeleteObject(hfont);
 		hfont = ::CreateFontIndirect(&lf);
 		::SelectObject(hdc, hfont);
+		DWORD size = GetFontUnicodeRanges(hdc, NULL);
+		if (size)
+		{
+			gbuf = new BYTE[size];
+			gset = reinterpret_cast<GLYPHSET*>(gbuf);
+			GetFontUnicodeRanges(hdc, gset);
+		}
 	}
 private:
 	HDC hdc;
@@ -598,6 +622,8 @@ private:
 	UINT format;
 	ttstr f_face;
 	int   f_height, f_angle, f_flags;
+	GLYPHSET* gset;
+	BYTE* gbuf;
 
 	static MAT2 no_transform_affin_matrix;
 
