@@ -614,6 +614,19 @@ struct LayerGlyphEx
 			gset = reinterpret_cast<GLYPHSET*>(gbuf);
 			GetFontUnicodeRanges(hdc, gset);
 		}
+		size = ::GetTextFaceW(hdc, 0, NULL);
+		if (size)
+		{
+			LPWSTR facenamebuf = new wchar_t[size];
+			if (::GetTextFaceW(hdc, size, facenamebuf))
+			{
+				if (wcsncmp(f_face.c_str(), (const wchar_t *)facenamebuf, size))
+				{
+					TVPAddLog(ttstr("tftSave: Font \"") + f_face + ttstr("\" was replaced with \"") + ttstr(facenamebuf) + ttstr("\""));
+				}
+			}
+			delete[] facenamebuf;
+		}
 	}
 private:
 	HDC hdc;
