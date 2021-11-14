@@ -313,7 +313,7 @@ public:
 		int  sw    = (int) lay.getIntValue(TJS_W("imageWidth"));
 		int  sh    = (int) lay.getIntValue(TJS_W("imageHeight"));
 		long pitch = (long)lay.getIntValue(TJS_W("mainImageBufferPitch"));
-		unsigned char *img = (unsigned char*)lay.getIntValue(TJS_W("mainImageBuffer"));
+		unsigned char *img = (unsigned char*)(tjs_intptr_t)lay.GetValue(TJS_W("mainImageBuffer"), ncbTypedefs::Tag<tjs_int64>());
 
 		if (sw > w) sw = w;
 		if (sh > h) sh = h;
@@ -553,7 +553,7 @@ struct LayerGlyphEx
 		ncbPropAccessor p(obj);
 		p.FuncCall(0, TJS_W("setSize"), 0, NULL, w, h);
 		pch = (long)p.getIntValue(TJS_W("mainImageBufferPitch")) / 4;
-		return (DWORD*)p.getIntValue(TJS_W("mainImageBufferForWrite"));
+		return (DWORD*)(unsigned char*)(tjs_intptr_t)p.GetValue(TJS_W("mainImageBufferForWrite"), ncbTypedefs::Tag<tjs_int64>());
 	}
 
 	void getFontInfo(ttstr &face, int &h, int &a, int &f) {
