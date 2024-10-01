@@ -93,17 +93,16 @@ const PFontFile::SizeType PFontFile::headerLength = 24;
 
 struct PFontSaver : public PFontFile
 {
+#if 1
 	unsigned char** fontCache;
 	unsigned int* posIndex;
+#endif
 	PFontSaver(tjs_char const *storage) : PFontFile(storage, TJS_BS_WRITE)
 	{
-		fontCache = new unsigned char*[0xffff];
-		memset(fontCache, 0, sizeof(unsigned char*) * 0xffff);
-		posIndex = new unsigned int[0xffff];
-		memset(posIndex, 0, sizeof(unsigned int) * 0xffff);
 		write(headerText, headerLength);
 		write("            ", 12); // dummy index
 	}
+#if 1
 	virtual ~PFontSaver() {
 		for (int i = 0; i < 0xffff; i += 1)
 		{
@@ -119,6 +118,9 @@ struct PFontSaver : public PFontFile
 		delete fontCache;
 		delete posIndex;
 	}
+#else
+	virtual ~PFontSaver() {}
+#endif
 
 	void writeHeader(tjs_uint32 count, SizeType chindexpos, SizeType indexpos) {
 		seek(headerLength);
@@ -269,12 +271,17 @@ public:
 		width    = (tjs_uint16) w;
 		height   = (tjs_uint16) h;
 
+#if 1
 		offset   = 0;
+#else
+		offset   = saver.getPos();
+#endif
 
 		if (width > 0 && height > 0) {
 			unsigned char *buf = new unsigned char[w * h];
 			try {
 				copyAlphaImage65(info, buf, w, h);
+#if 1
 				for (int i = 0; i < 0xffff; i += 1)
 				{
 					if (saver.fontCache[i] && !memcmp(buf, saver.fontCache[i], w * h))
@@ -302,10 +309,16 @@ public:
 					}
 					saver.writeCompress65(buf, w * h);
 				}
+#else
+				saver.writeCompress65(buf, w * h);
+#endif
 			} catch (...) {
 				delete [] buf;
 				throw;
 			}
+#if 0
+			delete buf;
+#endif
 		}
 	}
 	void copyAlphaImage65(ncbPropAccessor &lay, unsigned char *buf, int w, int h) {
@@ -476,14 +489,19 @@ struct LayerGlyphEx
 {
 	LayerGlyphEx(iTJSDispatch2 *self) : hdc(0), hfont(0), obj(self), font(0), format(GGO_GRAY8_BITMAP) {
 		hdc = ::CreateCompatibleDC(NULL);
+#if 1
 		gbuf = NULL;
+#endif
 	}
 	~LayerGlyphEx() {
 		if (hfont) ::DeleteObject(hfont);
+#if 1
 		if (gbuf) delete[] gbuf;
+#endif
 		::DeleteDC(hdc);
 	}
 
+#if 1
 	bool isGlyphSupported(int ncode) {
 		tjs_char code = ncode;
 		bool glyphSupported = false;
@@ -495,6 +513,7 @@ struct LayerGlyphEx
 		}
 		return glyphSupported;
 	}
+#endif
 	int getGlyphOutlineInfo(int ncode, GLYPHMETRICS &gm, iTJSDispatch2 *info = 0) {
 		ZeroMemory(&gm, sizeof(gm));
 		int size;
@@ -504,10 +523,12 @@ struct LayerGlyphEx
 		updateFont();
 		size = ::GetGlyphOutlineW(hdc, ncode, format, &gm, 0, NULL, &no_transform_affin_matrix);
 		::GetTextExtentPoint32W(hdc, &code, 1, &incsz);
+#if 1
 		if (!isGlyphSupported(ncode))
 		{
 			size = 0;
 		}
+#endif
 		if (info) {
 			ncbPropAccessor p(info);
 			p.SetValue(TJS_W("blackbox_x"), (tjs_int)(size?gm.gmBlackBoxX:0));
@@ -607,6 +628,7 @@ struct LayerGlyphEx
 		if (hfont) ::DeleteObject(hfont);
 		hfont = ::CreateFontIndirect(&lf);
 		::SelectObject(hdc, hfont);
+#if 1
 		DWORD size = GetFontUnicodeRanges(hdc, NULL);
 		if (size)
 		{
@@ -627,6 +649,7 @@ struct LayerGlyphEx
 			}
 			delete[] facenamebuf;
 		}
+#endif
 	}
 private:
 	HDC hdc;
@@ -635,8 +658,10 @@ private:
 	UINT format;
 	ttstr f_face;
 	int   f_height, f_angle, f_flags;
+#if 1
 	GLYPHSET* gset;
 	BYTE* gbuf;
+#endif
 
 	static MAT2 no_transform_affin_matrix;
 
