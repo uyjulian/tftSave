@@ -1,46 +1,46 @@
 /**
- * ƒVƒXƒeƒ€Šg’£
+ * ã‚·ã‚¹ãƒ†ãƒ æ‹¡å¼µ
  */
 class System
 {
 	/**
-	 * ƒŒƒ“ƒ_ƒŠƒ“ƒOÏ‚İƒtƒHƒ“ƒgƒf[ƒ^‚ğƒtƒ@ƒCƒ‹‚É•Û‘¶‚·‚é
+	 * ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°æ¸ˆã¿ãƒ•ã‚©ãƒ³ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«ä¿å­˜ã™ã‚‹
 	 *
-	 * @param storage    •Û‘¶‚·‚éƒtƒ@ƒCƒ‹–¼
-	 * @param characters •Û‘¶‚·‚é•¶šiƒLƒƒƒ‰ƒNƒ^ƒR[ƒhj‚Ì“ü‚Á‚½”z—ñ
-	 * @param callback   î•ñ‚ÆƒCƒ[ƒW‚ğæ“¾‚·‚éƒR[ƒ‹ƒoƒbƒN
-	 *                   ƒLƒƒƒ‰ƒNƒ^ƒR[ƒh‚ğˆø”‚Éæ‚èCƒŒƒCƒ„(PreRenderedFontImage)‚ğ•Ô‚·ŠÖ”‚Å‚ ‚é‚±‚Æ
+	 * @param storage    ä¿å­˜ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«å
+	 * @param characters ä¿å­˜ã™ã‚‹æ–‡å­—ï¼ˆã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚³ãƒ¼ãƒ‰ï¼‰ã®å…¥ã£ãŸé…åˆ—
+	 * @param callback   æƒ…å ±ã¨ã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’å–å¾—ã™ã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯
+	 *                   ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚³ãƒ¼ãƒ‰ã‚’å¼•æ•°ã«å–ã‚Šï¼Œãƒ¬ã‚¤ãƒ¤(PreRenderedFontImage)ã‚’è¿”ã™é–¢æ•°ã§ã‚ã‚‹ã“ã¨
 	 *                   function(ch) { return layer; }
 	 */
 	function savePreRenderedFont(storage, characters, callback);
 
 	/**
-	 * ƒŒƒ“ƒ_ƒŠƒ“ƒOÏ‚İƒtƒHƒ“ƒgƒf[ƒ^‚ğƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚Ş
+	 * ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°æ¸ˆã¿ãƒ•ã‚©ãƒ³ãƒˆãƒ‡ãƒ¼ã‚¿ã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚€
 	 *
-	 * @param storage    “Ç‚İ‚İƒtƒ@ƒCƒ‹–¼
-	 * @param characters ˆê——‚Ì•¶š‚ğó‚¯æ‚é‚½‚ß‚Ì”z—ñ
-	 * @param callback   «—ˆ“I‚É‰æ‘œƒCƒ[ƒW‚ğó‚¯æ‚éƒR[ƒ‹ƒoƒbƒN‚ªÀ‘•‚³‚ê‚é—\’è(Œ»ó‚Å‚Í•K‚¸void‚ğ“n‚·‚±‚Æj
+	 * @param storage    èª­ã¿è¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«å
+	 * @param characters ä¸€è¦§ã®æ–‡å­—ã‚’å—ã‘å–ã‚‹ãŸã‚ã®é…åˆ—
+	 * @param callback   å°†æ¥çš„ã«ç”»åƒã‚¤ãƒ¡ãƒ¼ã‚¸ã‚’å—ã‘å–ã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ãŒå®Ÿè£…ã•ã‚Œã‚‹äºˆå®š(ç¾çŠ¶ã§ã¯å¿…ãšvoidã‚’æ¸¡ã™ã“ã¨ï¼‰
 	 */
 	function loadPreRenderedFont(storage, characters, callback);
 
 	/**
-	 * ƒŒƒ“ƒ_ƒŠƒ“ƒOÏ‚İƒtƒHƒ“ƒgƒf[ƒ^‚ÌƒOƒŠƒtî•ñ‚ğXV‚·‚é(•ÏX‚Å‚«‚é‚Ì‚Íorigin_x|y, inc_x|y, inc‚Ì‚İ/blackbox‚ÍŒÅ’è)
+	 * ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°æ¸ˆã¿ãƒ•ã‚©ãƒ³ãƒˆãƒ‡ãƒ¼ã‚¿ã®ã‚°ãƒªãƒ•æƒ…å ±ã‚’æ›´æ–°ã™ã‚‹(å¤‰æ›´ã§ãã‚‹ã®ã¯origin_x|y, inc_x|y, incã®ã¿/blackboxã¯å›ºå®š)
 	 *
-	 * @param storage    “Ç‚İ‚İƒtƒ@ƒCƒ‹–¼
-	 * @param callback   î•ñæ“¾EXV—pƒR[ƒ‹ƒoƒbƒN
+	 * @param storage    èª­ã¿è¾¼ã¿ãƒ•ã‚¡ã‚¤ãƒ«å
+	 * @param callback   æƒ…å ±å–å¾—ãƒ»æ›´æ–°ç”¨ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯
 	 *                   function(ch, info = %[ blackbox_x|y, origin_x|y, inc_x|y, inc ]) { return true_if_modofied; }
 	 */
 	function modifyPreRenderedFont(storage, callback);
 }
 
 /**
- * @description ƒtƒHƒ“ƒgƒCƒ[ƒWi¦‚±‚ÌƒNƒ‰ƒX‚ÍÀÛ‚É‚Í‘¶İ‚µ‚Ü‚¹‚ñIj
+ * @description ãƒ•ã‚©ãƒ³ãƒˆã‚¤ãƒ¡ãƒ¼ã‚¸ï¼ˆâ€»ã“ã®ã‚¯ãƒ©ã‚¹ã¯å®Ÿéš›ã«ã¯å­˜åœ¨ã—ã¾ã›ã‚“ï¼ï¼‰
  *
- * callback‚Å•Ô‚·ƒŒƒCƒ„ƒIƒuƒWƒFƒNƒg‚É•t‰Á‚·‚é’Ç‰Áî•ñ‚ğ’è‹`‚µ‚Ü‚·B
- * •’Ê‚ÌƒŒƒCƒ„ƒIƒuƒWƒFƒNƒg‚É‘Î‚µ‚ÄC’l‚ğ‘ã“ü‚µ‚Ä“n‚µ‚Ä‚­‚¾‚³‚¢B
- * ƒŒƒCƒ„‚Ì‰æ‘œ‚Í(0,0)-(blackbox_x-1,blackbox_y-1)‚Ì—Ìˆæ‚Ìƒ¿î•ñ‚Ì‚İQÆ‚³‚êC65’iŠKi0`64j‚ÉƒŠƒTƒ“ƒvƒ‹‚³‚ê‚Ü‚·B
+ * callbackã§è¿”ã™ãƒ¬ã‚¤ãƒ¤ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«ä»˜åŠ ã™ã‚‹è¿½åŠ æƒ…å ±ã‚’å®šç¾©ã—ã¾ã™ã€‚
+ * æ™®é€šã®ãƒ¬ã‚¤ãƒ¤ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã«å¯¾ã—ã¦ï¼Œå€¤ã‚’ä»£å…¥ã—ã¦æ¸¡ã—ã¦ãã ã•ã„ã€‚
+ * ãƒ¬ã‚¤ãƒ¤ã®ç”»åƒã¯(0,0)-(blackbox_x-1,blackbox_y-1)ã®é ˜åŸŸã®Î±æƒ…å ±ã®ã¿å‚ç…§ã•ã‚Œï¼Œ65æ®µéšï¼ˆ0ï½64ï¼‰ã«ãƒªã‚µãƒ³ãƒ—ãƒ«ã•ã‚Œã¾ã™ã€‚
  *
- * callback‚Ì•Ô‚è’l‚Æ‚µ‚Ä“¯‚¶ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰½“x‚àg‚¢‚Ü‚í‚µ‚Ä‚à–â‘è‚ ‚è‚Ü‚¹‚ñB
+ * callbackã®è¿”ã‚Šå€¤ã¨ã—ã¦åŒã˜ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ä½•åº¦ã‚‚ä½¿ã„ã¾ã‚ã—ã¦ã‚‚å•é¡Œã‚ã‚Šã¾ã›ã‚“ã€‚
  */
 class PreRenderedFontImage extends Layer
 {
@@ -56,39 +56,39 @@ class PreRenderedFontImage extends Layer
 	property inc_x;      
 	// GLYPHMETRICS.gmCellIncY
 	property inc_y;      
-	// GetTextExtentPoint32 ‚Ì•Ô‚·ƒTƒCƒY‚Ì SIZE.cx
+	// GetTextExtentPoint32 ã®è¿”ã™ã‚µã‚¤ã‚ºã® SIZE.cx
 	property inc;        
 }
 
 /**
- * ƒŒƒCƒ„Šg’£
+ * ãƒ¬ã‚¤ãƒ¤æ‹¡å¼µ
  */
 class Layer
 {
 	/**
-	 * System.savePreRenderedFont—p‚Ì•¶š‚ğ•`‰æ‚·‚é
-	 * @param ch   ƒLƒƒƒ‰ƒNƒ^ƒR[ƒh
+	 * System.savePreRenderedFontç”¨ã®æ–‡å­—ã‚’æç”»ã™ã‚‹
+	 * @param ch   ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚³ãƒ¼ãƒ‰
 	 *
-	 * @description ©•ª©g‚ÌƒIƒuƒWƒFƒNƒg‚Ì PreRenderedFontImage ‚ÌƒvƒƒpƒeƒB‚ğXV‚µ‚Ü‚·
-	 * ¦“¯–¼‚ÌŠÖ”‚ª ‹g—¢‹g—¢Z ‚É‘¶İ‚·‚é‚Ì‚Å’ˆÓ‚·‚é‚±‚Æ
+	 * @description è‡ªåˆ†è‡ªèº«ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã® PreRenderedFontImage ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã‚’æ›´æ–°ã—ã¾ã™
+	 * â€»åŒåã®é–¢æ•°ãŒ å‰é‡Œå‰é‡ŒZ ã«å­˜åœ¨ã™ã‚‹ã®ã§æ³¨æ„ã™ã‚‹ã“ã¨
 	 */
 	function drawGlyph(ch);
 
 	/**
-	 * DirectWrite”Å drawGlyph (experimental)
-	 * @param ch   ƒLƒƒƒ‰ƒNƒ^ƒR[ƒh
-	 * @return ¬Œ÷‚µ‚½‚çtrue
+	 * DirectWriteç‰ˆ drawGlyph (experimental)
+	 * @param ch   ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚³ãƒ¼ãƒ‰
+	 * @return æˆåŠŸã—ãŸã‚‰true
 	 *
-	 * @description DirectWrite‚É‚æ‚éƒOƒŠƒt•`‰æi¸”s‚·‚é‰Â”\«ƒAƒŠj
+	 * @description DirectWriteã«ã‚ˆã‚‹ã‚°ãƒªãƒ•æç”»ï¼ˆå¤±æ•—ã™ã‚‹å¯èƒ½æ€§ã‚¢ãƒªï¼‰
 	 */
 	function renderGlyph(ch);
 
 	/**
-	 * ƒOƒŠƒtî•ñ‚ğİ’è‚·‚é
-	 * @param ch   ƒLƒƒƒ‰ƒNƒ^ƒR[ƒh
+	 * ã‚°ãƒªãƒ•æƒ…å ±ã‚’è¨­å®šã™ã‚‹
+	 * @param ch   ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚³ãƒ¼ãƒ‰
 	 *
-	 * @description ©g‚ÌƒIƒuƒWƒFƒNƒg‚Ì PreRenderedFontImage ‚ÌƒvƒƒpƒeƒB‚Ì‚İ‚ğXV‚µ‚Ü‚·
-	 * idrawGlyph ‚ÌƒOƒŠƒt‰æ‘œ‚ğ•`‰æ‚µ‚È‚¢ŠÖ”‚Å‚·j
+	 * @description è‡ªèº«ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã® PreRenderedFontImage ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã®ã¿ã‚’æ›´æ–°ã—ã¾ã™
+	 * ï¼ˆdrawGlyph ã®ã‚°ãƒªãƒ•ç”»åƒã‚’æç”»ã—ãªã„é–¢æ•°ã§ã™ï¼‰
 	 */
 	function setGlyphInfo(ch);
 }
