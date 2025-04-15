@@ -1,6 +1,20 @@
 #include <windows.h>
 #include "ncbind.hpp"
 
+#include "dwfont.hpp"
+
+static DWriteUtil *DirectWriteUtil = NULL;
+static DWriteUtil& LoadDirectWrite() {
+	if (!DirectWriteUtil) DirectWriteUtil = new DWriteUtil();
+	return *DirectWriteUtil;
+}
+static void UnloadDirectWrite() {
+	if (DirectWriteUtil) delete DirectWriteUtil;
+	/**/DirectWriteUtil = NULL;
+}
+NCB_PRE_UNREGIST_CALLBACK(UnloadDirectWrite);
+
+
 ////////////////////////////////////////////////////////////////
 
 // レンダリング済みフォントファイルの保存/情報読み取り処理
@@ -108,7 +122,7 @@ struct PFontSaver : public PFontFile
 	}
 
 	// フォントイメージ（65段階）のランレングス圧縮保存
-	void writeCompress65(unsigned char *buf, int size) {
+	void writeCompress65(const unsigned char *buf, int size) {
 		if (!size) return;
 
 		unsigned char *newbuf = new unsigned char [size];
@@ -156,7 +170,7 @@ private:
 
 struct PFontLoader : public PFontFile
 {
-	PFontLoader(tjs_char const *storage) : PFontFile(storage, TJS_BS_READ)
+	PFontLoader(tjs_char const *storage, tjs_uint32 flags = TJS_BS_READ) : PFontFile(storage, flags)
 	{
 		if (stream && !check(headerText, headerLength))
 			error(TJS_W("invalid tft header"));
@@ -193,6 +207,16 @@ class PFontImage
 	tjs_char   code;
 	tjs_uint16 width, height;
 	tjs_int16  origin_x, origin_y, inc_x, inc_y, inc;
+
+	void setInfo(ncbPropAccessor &info) {
+		info.SetValue(TJS_W("blackbox_x"), (tTVInteger)width);
+		info.SetValue(TJS_W("blackbox_y"), (tTVInteger)height);
+		info.SetValue(TJS_W("origin_x"),   (tTVInteger)origin_x);
+		info.SetValue(TJS_W("origin_y"),   (tTVInteger)origin_y);
+		info.SetValue(TJS_W("inc_x"),      (tTVInteger)inc_x);
+		info.SetValue(TJS_W("inc_y"),      (tTVInteger)inc_y);
+		info.SetValue(TJS_W("inc"),        (tTVInteger)inc);
+	}
 public:
 	PFontImage()
 		:   offset(0),
@@ -208,9 +232,9 @@ public:
 		tjs_int             ch;
 
 		GetInfoWork(tjs_int n, tTJSVariantClosure *c) : closure(c), error(TJS_E_FAIL), ch(n) {}
-		iTJSDispatch2 *callback() {
+		bool callback() {
 			TVPDoTryBlock(TryBlock, CatchBlock, 0, this);
-			return error == TJS_S_OK ? result.AsObjectNoAddRef() : 0;
+			return (error == TJS_S_OK);
 		}
 		void doTry() {
 			tTJSVariant num = ch;
@@ -224,19 +248,27 @@ public:
 	void saveImage(PFontSaver &saver, tjs_char ch, tTJSVariantClosure *closure) {
 		code = ch;
 		GetInfoWork wk((tjs_int)ch, closure);
-		iTJSDispatch2 *layer = wk.callback();
-		if (!layer) saver.error(TJS_W("invalid callback result"));
+		if (!wk.callback() || wk.result.Type() != tvtObject) saver.error(TJS_W("invalid callback result"));
+		iTJSDispatch2 *obj = wk.result.AsObjectNoAddRef();
+		if (!obj) saver.error(TJS_W("null result"));
 
-		ncbPropAccessor info(layer);
+		ncbPropAccessor info(obj);
 		if (!info.HasValue(TJS_W("blackbox_x")) ||
 			!info.HasValue(TJS_W("blackbox_y")) ||
 			!info.HasValue(TJS_W("origin_x")) ||
 			!info.HasValue(TJS_W("origin_y")) ||
 			!info.HasValue(TJS_W("inc_x")) ||
 			!info.HasValue(TJS_W("inc_y")) ||
-			!info.HasValue(TJS_W("inc")) ||
-			!info.getIntValue(TJS_W("hasImage")))
-			saver.error(TJS_W("no layer info"));
+			!info.HasValue(TJS_W("inc")))
+			saver.error(TJS_W("no glyph info"));
+		bool useraw = false;
+		if (info.HasValue(        TJS_W("hasImage"))) {
+			if (!info.getIntValue(TJS_W("hasImage"))) saver.error(TJS_W("no layer image"));
+		} else {
+			tTJSVariantType type;
+			useraw = info.HasValue(TJS_W("image"), NULL, &type) && (type == tvtOctet);
+			if (!useraw) saver.error(TJS_W("no octet image"));
+		}
 		int w    = (int)        info.getIntValue(TJS_W("blackbox_x"));
 		int h    = (int)        info.getIntValue(TJS_W("blackbox_y"));
 		origin_x = (tjs_int16)  info.getIntValue(TJS_W("origin_x"));
@@ -252,15 +284,25 @@ public:
 		offset   = saver.getPos();
 
 		if (width > 0 && height > 0) {
-			unsigned char *buf = new unsigned char[w * h];
-			try {
-				copyAlphaImage65(info, buf, w, h);
-				saver.writeCompress65(buf, w * h);
-			} catch (...) {
+			if (useraw) {
+				tTJSVariant voct = info.GetValue(TJS_W("image"), ncbTypedefs::Tag<tTJSVariant>());
+				tTJSVariantOctet *oct = voct.AsOctetNoAddRef();
+				if (!oct || oct->GetLength() != w*h) {
+					saver.error(TJS_W("octet size mismatched"));
+				} else {
+					saver.writeCompress65(oct->GetData(), oct->GetLength());
+				}
+			} else {
+				unsigned char *buf = new unsigned char[w * h];
+				try {
+					copyAlphaImage65(info, buf, w, h);
+					saver.writeCompress65(buf, w * h);
+				} catch (...) {
+					delete [] buf;
+					throw;
+				}
 				delete [] buf;
-				throw;
 			}
-			delete buf;
 		}
 	}
 	void copyAlphaImage65(ncbPropAccessor &lay, unsigned char *buf, int w, int h) {
@@ -285,7 +327,7 @@ public:
 	void saveCode(PFontSaver &saver) {
 		saver.write(&code, sizeof(code));
 	}
-	void saveInfo(PFontSaver &saver) {
+	void saveInfo(PFontFile &saver) {
 		saver.write(&offset,   4);
 		saver.write(&width,    2);
 		saver.write(&height,   2);
@@ -304,7 +346,7 @@ public:
 		loader.read(&code, sizeof(code));
 		return code;
 	}
-	void loadInfo(PFontLoader &loader) {
+	void loadInfo(PFontFile &loader) {
 		loader.read(&offset,   4);
 		loader.read(&width,    2);
 		loader.read(&height,   2);
@@ -319,7 +361,91 @@ public:
 	}
 	void loadImage(PFontLoader &loader, tTJSVariantClosure *closure) {
 		loader.seek(offset);
-		// [TODO] convert tft-image to layer
+
+		tjs_uint size = width * height;
+		tjs_uint8 *buf = new tjs_uint8[size];
+		try {
+			tjs_uint8 *p = buf;
+			tjs_uint8 *end = p + size;
+			while (p < end) {
+				tjs_uint8 v;
+				loader.read(&v, 1);
+				if (v <= 0x40) *p++ = v;
+				else {
+					tjs_int len = (v - 0x40);
+					tjs_uint8 last = p > buf ? p[-1] : 0; // バッファアンダーフロー対策
+					if (p + len > end) len = (tjs_int)(end - p); // バッファオーバーラン対策
+					while(len--) *p++ = last;
+				}
+			}
+		} catch (...) {
+			delete [] buf;
+			throw;
+		}
+		tTJSVariant image(buf, size);
+		delete [] buf;
+
+		ncbDictionaryAccessor info;
+		setInfo(info);
+		info.SetValue(TJS_W("image"), image);
+
+		tTJSVariant vinfo(info, info);
+		UpdateInfoWork wk((tjs_int)code, vinfo, closure);
+		wk.callback();
+	}
+
+	////////////////////////////////////////////////
+	struct UpdateInfoWork {
+		tTJSVariant         result, info;
+		tTJSVariantClosure *closure;
+		tjs_error           error;
+		tjs_int             ch;
+
+		UpdateInfoWork(tjs_int n, tTJSVariant info, tTJSVariantClosure *c) : closure(c), error(TJS_E_FAIL), ch(n), info(info) {}
+		bool callback() {
+			TVPDoTryBlock(TryBlock, CatchBlock, 0, this);
+			return error == TJS_S_OK ? result.operator bool() : 0;
+		}
+		void doTry() {
+			tTJSVariant num = ch;
+			tTJSVariant *param[] = { &num, &info };
+			error = closure->FuncCall(0, 0, 0, &result, 2, param, 0);
+		}
+		static void TJS_USERENTRY TryBlock(void *p) { ((UpdateInfoWork*)p)->doTry(); }
+		static bool TJS_USERENTRY CatchBlock(void *p, const tTVPExceptionDesc &d) { return true; }
+	};
+
+	void updateInfo(PFontFile &file, tjs_char ch, tTJSVariantClosure *closure) {
+		code = ch;
+		PFontFile::SizeType pos = file.getPos();
+		loadInfo(file);
+
+		ncbDictionaryAccessor info;
+		setInfo(info);
+		/*
+		info.SetValue(TJS_W("blackbox_x"), (tTVInteger)width);
+		info.SetValue(TJS_W("blackbox_y"), (tTVInteger)height);
+		info.SetValue(TJS_W("origin_x"),   (tTVInteger)origin_x);
+		info.SetValue(TJS_W("origin_y"),   (tTVInteger)origin_y);
+		info.SetValue(TJS_W("inc_x"),      (tTVInteger)inc_x);
+		info.SetValue(TJS_W("inc_y"),      (tTVInteger)inc_y);
+		info.SetValue(TJS_W("inc"),        (tTVInteger)inc);
+		 */
+
+		tTJSVariant vinfo(info, info);
+		UpdateInfoWork wk((tjs_int)ch, vinfo, closure);
+		if (wk.callback()) {
+			file.seek(pos);
+			if (info.getIntValue(TJS_W("blackbox_x")) != (tjs_int)width ||
+				info.getIntValue(TJS_W("blackbox_y")) != (tjs_int)height)
+				file.error(TJS_W("blackbox cannot change"));
+			origin_x = (tjs_int16)  info.getIntValue(TJS_W("origin_x"));
+			origin_y = (tjs_int16)  info.getIntValue(TJS_W("origin_y"));
+			inc_x    = (tjs_int16)  info.getIntValue(TJS_W("inc_x"));
+			inc_y    = (tjs_int16)  info.getIntValue(TJS_W("inc_y"));
+			inc      = (tjs_int16)  info.getIntValue(TJS_W("inc"));
+			saveInfo(file);
+		}
 	}
 };
 
@@ -420,6 +546,43 @@ static void loadPreRenderedFont(tjs_char const *storage, tTJSVariant characters,
 NCB_ATTACH_FUNCTION(loadPreRenderedFont, System, loadPreRenderedFont);
 
 
+//--------------------------------------------------------------
+// infoのみ書き換え処理
+
+#include <vector>
+static void modifyPreRenderedFont(tjs_char const *storage, tTJSVariant callback)
+{
+	PFontLoader loader(storage, TJS_BS_UPDATE);
+
+	tTJSVariantClosure closure = callback.AsObjectClosureNoAddRef();
+
+	typedef PFontFile::SizeType SizeType;
+	SizeType chindexpos = 0;
+	SizeType indexpos   = 0;
+	SizeType imagepos   = 0;
+
+	tjs_uint32 count = 0;
+	loader.readHeader(count, chindexpos, indexpos);
+	if (!count) loader.error(TJS_W("empty characters"));
+
+	PFontImage image;
+	std::vector<tjs_char> charray;
+
+	loader.seek(chindexpos);
+	tjs_uint32 i;
+	for (i = 0; i < count; i++) {
+		tjs_char ch = image.loadCode(loader);
+		charray.push_back(ch);
+	}
+
+	loader.seek(indexpos);
+	for (i = 0; i < count; i++) {
+		image.updateInfo(loader, charray[i], &closure);
+	}
+	
+}
+
+NCB_ATTACH_FUNCTION(modifyPreRenderedFont, System, modifyPreRenderedFont);
 
 ////////////////////////////////////////////////////////////////
 
@@ -429,10 +592,11 @@ NCB_ATTACH_FUNCTION(loadPreRenderedFont, System, loadPreRenderedFont);
 
 struct LayerGlyphEx
 {
-	LayerGlyphEx(iTJSDispatch2 *self) : hdc(0), hfont(0), obj(self), font(0), format(GGO_GRAY8_BITMAP) {
+	LayerGlyphEx(iTJSDispatch2 *self) : hdc(0), hfont(0), obj(self), font(0), format(GGO_GRAY8_BITMAP), charset(DEFAULT_CHARSET), dwrender(0) {
 		hdc = ::CreateCompatibleDC(NULL);
 	}
 	~LayerGlyphEx() {
+		if (dwrender) delete dwrender;
 		if (hfont) ::DeleteObject(hfont);
 		::DeleteDC(hdc);
 	}
@@ -486,6 +650,36 @@ struct LayerGlyphEx
 			delete [] buf;
 		}
 	}
+	bool renderGlyph(tjs_uint32 ncode) {
+		if (!dwrender) dwrender = new DWriteGlyphRenderer(hdc, LoadDirectWrite());
+		updateFont();
+		DWriteGlyphBitmap bitmap;
+		if (!dwrender->render(ncode, bitmap)) return false;
+		const int w = bitmap.width;
+		const int h = bitmap.height;
+		long dstpch = 0;
+		DWORD *dst = setupWriteImage(w, h, dstpch);
+		if (w > 0 && h > 0) {
+			const BYTE *buf = &bitmap.image.front();
+			for (int y = 0; y < h; y++) {
+				DWORD *q = dst + y * dstpch;
+				for (int x = 0; x < w; x++) *q++ = ((DWORD)(*buf++) << 24) | 0x00FFFFFF;
+			}
+		}
+
+		ncbPropAccessor p(obj);
+		const tjs_int inc = (tjs_int)(bitmap.advance + 0.5f);
+		p.SetValue(TJS_W("blackbox_x"), (tjs_int)w);
+		p.SetValue(TJS_W("blackbox_y"), (tjs_int)h);
+		p.SetValue(TJS_W("origin_x"),   (tjs_int)bitmap.left);
+		p.SetValue(TJS_W("origin_y"),   (tjs_int)bitmap.top);
+		p.SetValue(TJS_W("inc_x"),      inc);
+		p.SetValue(TJS_W("inc_y"),      (tjs_int)0);
+		p.SetValue(TJS_W("inc"),        inc);
+		return true;
+	}
+
+
 	inline DWORD convPixel(unsigned char px) { return !px ? 0 : px >= 64 ? 0xFFFFFFFF : (0x00FFFFFF | (((DWORD)px) << (2+24))); }
 	DWORD* setupWriteImage(int w, int h, long &pch) {
 		ncbPropAccessor p(obj);
@@ -536,7 +730,7 @@ struct LayerGlyphEx
 		lf.lfStrikeOut  = (f_flags & TVP_TF_STRIKEOUT) ? TRUE:FALSE;
 		lf.lfEscapement = lf.lfOrientation = f_angle;
 
-		lf.lfCharSet        = DEFAULT_CHARSET; //SHIFTJIS_CHARSET;
+		lf.lfCharSet        = charset; // DEFAULT_CHARSET; //SHIFTJIS_CHARSET;
 		lf.lfOutPrecision   = OUT_DEFAULT_PRECIS;
 		lf.lfQuality        = DEFAULT_QUALITY;
 		lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
@@ -545,14 +739,24 @@ struct LayerGlyphEx
 		if (hfont) ::DeleteObject(hfont);
 		hfont = ::CreateFontIndirect(&lf);
 		::SelectObject(hdc, hfont);
+
+		if (dwrender) dwrender->setFont(lf);
 	}
+
+	int get_charset() const { return (int)charset; }
+	void set_charset(int c) { charset = (BYTE)c; }
+
 private:
 	HDC hdc;
 	HFONT hfont;
 	iTJSDispatch2 *obj, *font;
 	UINT format;
+	BYTE charset;
+
 	ttstr f_face;
 	int   f_height, f_angle, f_flags;
+
+	DWriteGlyphRenderer *dwrender;
 
 	static MAT2 no_transform_affin_matrix;
 
@@ -574,5 +778,7 @@ NCB_ATTACH_CLASS_WITH_HOOK(LayerGlyphEx, Layer)
 {
 	Method(TJS_W("setGlyphInfo"), &Class::setGlyphInfo);
 	Method(TJS_W("drawGlyph"), &Class::drawGlyph);
+	Method(TJS_W("renderGlyph"), &Class::renderGlyph);
+	Property(TJS_W("glyphCharset"), &Class::get_charset, &Class::set_charset);
 }
 
