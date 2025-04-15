@@ -22,6 +22,15 @@ class System
 	 * @param callback   将来的に画像イメージを受け取るコールバックが実装される予定(現状では必ずvoidを渡すこと）
 	 */
 	function loadPreRenderedFont(storage, characters, callback);
+
+	/**
+	 * レンダリング済みフォントデータのグリフ情報を更新する(変更できるのはorigin_x|y, inc_x|y, incのみ/blackboxは固定)
+	 *
+	 * @param storage    読み込みファイル名
+	 * @param callback   情報取得・更新用コールバック
+	 *                   function(ch, info = %[ blackbox_x|y, origin_x|y, inc_x|y, inc ]) { return true_if_modofied; }
+	 */
+	function modifyPreRenderedFont(storage, callback);
 }
 
 /**
@@ -61,8 +70,18 @@ class Layer
 	 * @param ch   キャラクタコード
 	 *
 	 * @description 自分自身のオブジェクトの PreRenderedFontImage のプロパティを更新します
+	 * ※同名の関数が 吉里吉里Z に存在するので注意すること
 	 */
 	function drawGlyph(ch);
+
+	/**
+	 * DirectWrite版 drawGlyph (experimental)
+	 * @param ch   キャラクタコード
+	 * @return 成功したらtrue
+	 *
+	 * @description DirectWriteによるグリフ描画（失敗する可能性アリ）
+	 */
+	function renderGlyph(ch);
 
 	/**
 	 * グリフ情報を設定する
