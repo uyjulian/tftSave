@@ -121,9 +121,9 @@ public:
 						DWRITE_GRID_FIT_MODE_DISABLED,
 						&params)))
 					{
-						// static-cast ‚ÅOK‚Ì‚Í‚¸
+						// static-cast ã§OKã®ã¯ãš
 						Params = static_cast<IDWriteRenderingParams*>(params);
-						/** NG‚Ìê‡
+						/** NGã®å ´åˆ
 						params->QueryInterface(__uuidof(IDWriteRenderingParams), (void**)&Params);
 						params->Release();
 						 */
@@ -224,7 +224,7 @@ public:
 		if (bbox.left < 0 || bbox.top < 0 || bbox.right >= rect.right || bbox.bottom >= rect.bottom) return false;
 
 		bitmap.left = bbox.left - ox;
-		bitmap.top  = oy - bbox.top; // ã‰º‹t
+		bitmap.top  = oy - bbox.top; // ä¸Šä¸‹é€†
 		bitmap.width  = bbox.right - bbox.left;
 		bitmap.height = bbox.bottom - bbox.top;
 		size_t wh = bitmap.width * bitmap.height;
@@ -270,7 +270,7 @@ public:
 		 */
 
 		IDWriteGlyphRunAnalysis *analysis = nullptr;
-		if (FAILED(Util.factory()->CreateGlyphRunAnalysis( // Face‚ª‘¶İ‚·‚éê‡í‚Éfactory‚à‘¶İ‚·‚é
+		if (FAILED(Util.factory()->CreateGlyphRunAnalysis( // FaceãŒå­˜åœ¨ã™ã‚‹å ´åˆå¸¸ã«factoryã‚‚å­˜åœ¨ã™ã‚‹
 			&glrun, 1.0f, NULL, //&matrix,
             DWRITE_RENDERING_MODE_CLEARTYPE_GDI_CLASSIC,
             DWRITE_MEASURING_MODE_GDI_CLASSIC,
